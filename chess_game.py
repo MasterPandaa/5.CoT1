@@ -1,7 +1,8 @@
-import sys
 import random
-import pygame
+import sys
 from typing import List, Optional, Tuple
+
+import pygame
 
 # =============================
 # Config & Constants
@@ -25,35 +26,35 @@ BG_COLOR = (30, 30, 30)
 TEXT_COLOR = (240, 240, 240)
 
 # Players
-WHITE = 'w'
-BLACK = 'b'
+WHITE = "w"
+BLACK = "b"
 HUMAN_COLOR = WHITE  # Human plays White by default
 AI_COLOR = BLACK
 
 # Piece values for AI heuristic
 PIECE_VALUE = {
-    'K': 0,  # we won't use king value for capture heuristic
-    'Q': 9,
-    'R': 5,
-    'B': 3,
-    'N': 3,
-    'P': 1,
+    "K": 0,  # we won't use king value for capture heuristic
+    "Q": 9,
+    "R": 5,
+    "B": 3,
+    "N": 3,
+    "P": 1,
 }
 
 # Unicode symbols for rendering pieces
 UNICODE_PIECES = {
-    (WHITE, 'K'): '\u2654',
-    (WHITE, 'Q'): '\u2655',
-    (WHITE, 'R'): '\u2656',
-    (WHITE, 'B'): '\u2657',
-    (WHITE, 'N'): '\u2658',
-    (WHITE, 'P'): '\u2659',
-    (BLACK, 'K'): '\u265A',
-    (BLACK, 'Q'): '\u265B',
-    (BLACK, 'R'): '\u265C',
-    (BLACK, 'B'): '\u265D',
-    (BLACK, 'N'): '\u265E',
-    (BLACK, 'P'): '\u265F',
+    (WHITE, "K"): "\u2654",
+    (WHITE, "Q"): "\u2655",
+    (WHITE, "R"): "\u2656",
+    (WHITE, "B"): "\u2657",
+    (WHITE, "N"): "\u2658",
+    (WHITE, "P"): "\u2659",
+    (BLACK, "K"): "\u265a",
+    (BLACK, "Q"): "\u265b",
+    (BLACK, "R"): "\u265c",
+    (BLACK, "B"): "\u265d",
+    (BLACK, "N"): "\u265e",
+    (BLACK, "P"): "\u265f",
 }
 
 Piece = Optional[Tuple[str, str]]  # (color, type) e.g., ('w','P') or None
@@ -70,20 +71,32 @@ def create_initial_board() -> Board:
     # We'll define row 0 as Black back rank at top, row 7 as White back rank at bottom.
     # Black pieces (top)
     board[0] = [
-        (BLACK, 'R'), (BLACK, 'N'), (BLACK, 'B'), (BLACK, 'Q'),
-        (BLACK, 'K'), (BLACK, 'B'), (BLACK, 'N'), (BLACK, 'R')
+        (BLACK, "R"),
+        (BLACK, "N"),
+        (BLACK, "B"),
+        (BLACK, "Q"),
+        (BLACK, "K"),
+        (BLACK, "B"),
+        (BLACK, "N"),
+        (BLACK, "R"),
     ]
-    board[1] = [(BLACK, 'P')] * BOARD_SIZE
+    board[1] = [(BLACK, "P")] * BOARD_SIZE
 
     # Empty middle
     for r in range(2, 6):
         board[r] = [None] * BOARD_SIZE
 
     # White pieces (bottom)
-    board[6] = [(WHITE, 'P')] * BOARD_SIZE
+    board[6] = [(WHITE, "P")] * BOARD_SIZE
     board[7] = [
-        (WHITE, 'R'), (WHITE, 'N'), (WHITE, 'B'), (WHITE, 'Q'),
-        (WHITE, 'K'), (WHITE, 'B'), (WHITE, 'N'), (WHITE, 'R')
+        (WHITE, "R"),
+        (WHITE, "N"),
+        (WHITE, "B"),
+        (WHITE, "Q"),
+        (WHITE, "K"),
+        (WHITE, "B"),
+        (WHITE, "N"),
+        (WHITE, "R"),
     ]
     return board
 
@@ -100,9 +113,13 @@ def is_enemy(p: Piece, color: str) -> bool:
     return p is not None and p[0] != color
 
 
-def generate_pawn_moves(board: Board, r: int, c: int, color: str) -> List[Tuple[int, int]]:
+def generate_pawn_moves(
+    board: Board, r: int, c: int, color: str
+) -> List[Tuple[int, int]]:
     moves = []
-    direction = -1 if color == WHITE else 1  # White moves up (toward row 0), Black moves down
+    direction = (
+        -1 if color == WHITE else 1
+    )  # White moves up (toward row 0), Black moves down
     start_row = 6 if color == WHITE else 1
 
     # one step forward
@@ -124,7 +141,9 @@ def generate_pawn_moves(board: Board, r: int, c: int, color: str) -> List[Tuple[
     return moves
 
 
-def generate_knight_moves(board: Board, r: int, c: int, color: str) -> List[Tuple[int, int]]:
+def generate_knight_moves(
+    board: Board, r: int, c: int, color: str
+) -> List[Tuple[int, int]]:
     moves = []
     deltas = [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)]
     for dr, dc in deltas:
@@ -134,7 +153,9 @@ def generate_knight_moves(board: Board, r: int, c: int, color: str) -> List[Tupl
     return moves
 
 
-def slide_moves(board: Board, r: int, c: int, color: str, directions: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+def slide_moves(
+    board: Board, r: int, c: int, color: str, directions: List[Tuple[int, int]]
+) -> List[Tuple[int, int]]:
     moves = []
     for dr, dc in directions:
         nr, nc = r + dr, c + dc
@@ -150,7 +171,9 @@ def slide_moves(board: Board, r: int, c: int, color: str, directions: List[Tuple
     return moves
 
 
-def generate_king_moves(board: Board, r: int, c: int, color: str) -> List[Tuple[int, int]]:
+def generate_king_moves(
+    board: Board, r: int, c: int, color: str
+) -> List[Tuple[int, int]]:
     moves = []
     for dr in (-1, 0, 1):
         for dc in (-1, 0, 1):
@@ -168,20 +191,23 @@ def generate_moves_for_piece(board: Board, r: int, c: int) -> List[Tuple[int, in
     if piece is None:
         return []
     color, ptype = piece
-    if ptype == 'P':
+    if ptype == "P":
         return generate_pawn_moves(board, r, c, color)
-    if ptype == 'N':
+    if ptype == "N":
         return generate_knight_moves(board, r, c, color)
-    if ptype == 'B':
+    if ptype == "B":
         return slide_moves(board, r, c, color, [(-1, -1), (-1, 1), (1, -1), (1, 1)])
-    if ptype == 'R':
+    if ptype == "R":
         return slide_moves(board, r, c, color, [(-1, 0), (1, 0), (0, -1), (0, 1)])
-    if ptype == 'Q':
-        return slide_moves(board, r, c, color, [
-            (-1, -1), (-1, 1), (1, -1), (1, 1),
-            (-1, 0), (1, 0), (0, -1), (0, 1)
-        ])
-    if ptype == 'K':
+    if ptype == "Q":
+        return slide_moves(
+            board,
+            r,
+            c,
+            color,
+            [(-1, -1), (-1, 1), (1, -1), (1, 1), (-1, 0), (1, 0), (0, -1), (0, 1)],
+        )
+    if ptype == "K":
         return generate_king_moves(board, r, c, color)
     return []
 
@@ -192,12 +218,14 @@ def generate_all_moves(board: Board, color: str) -> List[Move]:
         for c in range(BOARD_SIZE):
             p = board[r][c]
             if p and p[0] == color:
-                for (nr, nc) in generate_moves_for_piece(board, r, c):
+                for nr, nc in generate_moves_for_piece(board, r, c):
                     all_moves.append((r, c, nr, nc))
     return all_moves
 
 
-def make_move(board: Board, move: Move) -> Tuple[Piece, Optional[Tuple[int, int, Piece]]]:
+def make_move(
+    board: Board, move: Move
+) -> Tuple[Piece, Optional[Tuple[int, int, Piece]]]:
     """
     Executes move on board in-place. Also handles pawn promotion to Queen automatically.
     Returns (captured_piece, promotion_info)
@@ -211,10 +239,12 @@ def make_move(board: Board, move: Move) -> Tuple[Piece, Optional[Tuple[int, int,
     board[fr][fc] = None
 
     promo: Optional[Tuple[int, int, Piece]] = None
-    if moving and moving[1] == 'P':
-        if (moving[0] == WHITE and tr == 0) or (moving[0] == BLACK and tr == BOARD_SIZE - 1):
+    if moving and moving[1] == "P":
+        if (moving[0] == WHITE and tr == 0) or (
+            moving[0] == BLACK and tr == BOARD_SIZE - 1
+        ):
             # promote to Queen
-            board[tr][tc] = (moving[0], 'Q')
+            board[tr][tc] = (moving[0], "Q")
             promo = (tr, tc, moving)
     return captured, promo
 
@@ -248,18 +278,28 @@ def ai_choose_move(board: Board, color: str) -> Optional[Move]:
 # Rendering
 # =============================
 
-def draw_board(screen: pygame.Surface, board: Board, font: pygame.font.Font,
-               selected: Optional[Tuple[int, int]], legal: List[Tuple[int, int]],
-               last_move: Optional[Move], turn: str, status_text: str) -> None:
+
+def draw_board(
+    screen: pygame.Surface,
+    board: Board,
+    font: pygame.font.Font,
+    selected: Optional[Tuple[int, int]],
+    legal: List[Tuple[int, int]],
+    last_move: Optional[Move],
+    turn: str,
+    status_text: str,
+) -> None:
     screen.fill(BG_COLOR)
     # Draw board background
-    board_rect = pygame.Rect(MARGIN, MARGIN, TILE_SIZE * BOARD_SIZE, TILE_SIZE * BOARD_SIZE)
+    board_rect = pygame.Rect(
+        MARGIN, MARGIN, TILE_SIZE * BOARD_SIZE, TILE_SIZE * BOARD_SIZE
+    )
     pygame.draw.rect(screen, (50, 50, 50), board_rect, border_radius=8)
 
     # Highlight last move
     if last_move:
         fr, fc, tr, tc = last_move
-        for (rr, cc) in [(fr, fc), (tr, tc)]:
+        for rr, cc in [(fr, fc), (tr, tc)]:
             x = MARGIN + cc * TILE_SIZE
             y = MARGIN + rr * TILE_SIZE
             pygame.draw.rect(screen, LAST_MOVE, (x, y, TILE_SIZE, TILE_SIZE))
@@ -280,7 +320,7 @@ def draw_board(screen: pygame.Surface, board: Board, font: pygame.font.Font,
         pygame.draw.rect(screen, SELECT_COLOR, (x, y, TILE_SIZE, TILE_SIZE))
 
     # Highlight legal moves
-    for (mr, mc) in legal:
+    for mr, mc in legal:
         x = MARGIN + mc * TILE_SIZE
         y = MARGIN + mr * TILE_SIZE
         if board[mr][mc] is None:
@@ -293,7 +333,7 @@ def draw_board(screen: pygame.Surface, board: Board, font: pygame.font.Font,
         for c in range(BOARD_SIZE):
             p = board[r][c]
             if p:
-                sym = UNICODE_PIECES.get(p, '?')
+                sym = UNICODE_PIECES.get(p, "?")
                 piece_surf = font.render(sym, True, (10, 10, 10))
                 # Center in square
                 rect = piece_surf.get_rect()
@@ -304,7 +344,12 @@ def draw_board(screen: pygame.Surface, board: Board, font: pygame.font.Font,
                 screen.blit(piece_surf, rect)
 
     # Bottom panel for status
-    panel_rect = pygame.Rect(MARGIN, MARGIN + TILE_SIZE * BOARD_SIZE + 8, TILE_SIZE * BOARD_SIZE, PANEL_HEIGHT)
+    panel_rect = pygame.Rect(
+        MARGIN,
+        MARGIN + TILE_SIZE * BOARD_SIZE + 8,
+        TILE_SIZE * BOARD_SIZE,
+        PANEL_HEIGHT,
+    )
     pygame.draw.rect(screen, (45, 45, 45), panel_rect, border_radius=6)
 
     turn_text = f"Turn: {'White' if turn == WHITE else 'Black'}"
@@ -321,8 +366,12 @@ def draw_board(screen: pygame.Surface, board: Board, font: pygame.font.Font,
 # Input helpers
 # =============================
 
+
 def screen_to_board(mx: int, my: int) -> Optional[Tuple[int, int]]:
-    if not (MARGIN <= mx < MARGIN + TILE_SIZE * BOARD_SIZE and MARGIN <= my < MARGIN + TILE_SIZE * BOARD_SIZE):
+    if not (
+        MARGIN <= mx < MARGIN + TILE_SIZE * BOARD_SIZE
+        and MARGIN <= my < MARGIN + TILE_SIZE * BOARD_SIZE
+    ):
         return None
     c = (mx - MARGIN) // TILE_SIZE
     r = (my - MARGIN) // TILE_SIZE
@@ -333,9 +382,10 @@ def screen_to_board(mx: int, my: int) -> Optional[Tuple[int, int]]:
 # Main Game
 # =============================
 
+
 def run_game() -> None:
     pygame.init()
-    pygame.display.set_caption('Pygame Chess - Human vs Simple AI')
+    pygame.display.set_caption("Pygame Chess - Human vs Simple AI")
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     clock = pygame.time.Clock()
 
@@ -360,7 +410,7 @@ def run_game() -> None:
             pygame.time.delay(200)  # small delay to look natural
             mv = ai_choose_move(board, AI_COLOR)
             if mv is None:
-                status_text = 'AI has no legal moves. Game over.'
+                status_text = "AI has no legal moves. Game over."
                 running = False
             else:
                 captured, _ = make_move(board, mv)
@@ -377,7 +427,11 @@ def run_game() -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and turn == HUMAN_COLOR:
+            elif (
+                event.type == pygame.MOUSEBUTTONDOWN
+                and event.button == 1
+                and turn == HUMAN_COLOR
+            ):
                 pos = pygame.mouse.get_pos()
                 sq = screen_to_board(*pos)
                 if sq is None:
@@ -419,11 +473,20 @@ def run_game() -> None:
                                 selected = None
                                 legal_moves = []
 
-        draw_board(screen, board, piece_font, selected, legal_moves, last_move, turn, status_text)
+        draw_board(
+            screen,
+            board,
+            piece_font,
+            selected,
+            legal_moves,
+            last_move,
+            turn,
+            status_text,
+        )
 
     # End screen simple pause
     end_font = pygame.font.SysFont(None, 36)
-    end_msg = end_font.render('Game Over - Close window', True, (255, 255, 255))
+    end_msg = end_font.render("Game Over - Close window", True, (255, 255, 255))
     rect = end_msg.get_rect(center=(WIDTH // 2, HEIGHT - PANEL_HEIGHT // 2))
     screen.blit(end_msg, rect)
     pygame.display.flip()
@@ -440,10 +503,10 @@ def run_game() -> None:
     sys.exit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         run_game()
     except ImportError as e:
-        print('Missing dependency. Please install pygame:')
-        print('  pip install pygame')
+        print("Missing dependency. Please install pygame:")
+        print("  pip install pygame")
         raise
